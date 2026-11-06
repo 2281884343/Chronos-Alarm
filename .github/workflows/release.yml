@@ -1,0 +1,48 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release metadata
+        uses: actions/checkout@v4
+
+      - name: Download APK from release-assets branch
+        env:
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          ASSET="tianshi-alarm-${TAG#v}-debug.apk"
+          URL="https://raw.githubusercontent.com/${REPO}/release-assets/${ASSET}"
+          curl -fL --retry 3 --retry-delay 2 -o "$ASSET" "$URL"
+          ls -lh "$ASSET"
+          echo "ASSET=$ASSET" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          NOTES=".github/release-notes/${TAG#v}.md"
+          if [ -f "$NOTES" ]; then
+            gh release create "$TAG" "$ASSET" \
+              --title "天时闹钟 ${TAG#v}" \
+              --notes-file "$NOTES" \
+              --verify-tag
+          else
+            gh release create "$TAG" "$ASSET" \
+              --title "天时闹钟 ${TAG#v}" \
+              --generate-notes \
+              --verify-tag
+          fi
