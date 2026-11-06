@@ -24,18 +24,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.DirectionsBike
 import androidx.compose.material.icons.outlined.DirectionsBus
 import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.DirectionsWalk
 import androidx.compose.material.icons.outlined.ElectricBike
-import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,9 +80,6 @@ import com.mobilealarm.domain.model.CommutePlan
 import com.mobilealarm.domain.model.CommutePlace
 import com.mobilealarm.ui.appViewModel
 import com.mobilealarm.ui.components.WheelTimePickerSheet
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,17 +128,6 @@ fun CommuteScreen(
                         Icon(Icons.Outlined.ArrowBack, contentDescription = "返回")
                     }
                 },
-                actions = {
-                    TextButton(onClick = viewModel::save, enabled = !state.saving) {
-                        if (state.saving) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("保存")
-                        }
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
@@ -155,12 +140,11 @@ fun CommuteScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 4.dp,
-                bottom = 40.dp,
+                top = 8.dp,
+                bottom = 32.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item { IntroCard() }
             item {
                 KeyCard(
                     key = state.amapKey,
@@ -202,7 +186,6 @@ fun CommuteScreen(
                 PreviewCard(
                     plan = state.plan,
                     preview = state.preview,
-                    refreshing = state.refreshing,
                 )
             }
             item {
@@ -211,79 +194,29 @@ fun CommuteScreen(
                     enabled = !state.saving,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.44f),
+                    ),
                 ) {
                     if (state.saving) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     } else {
                         Text("保存通勤提醒", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
-            item {
-                Text(
-                    text = "说明：系统按所选方式取耗时（开车含实时路况，公交含换乘接驳，电瓶车按骑行路线折算），" +
-                        "再用「到达时间 − 耗时 − 缓冲」倒推提醒时间。临近出门的 4 小时内每 30 分钟自动刷新一次；" +
-                        "进入待机或断网时可能略有延迟。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                )
-            }
         }
-    }
-}
-
-@Composable
-private fun IntroCard() {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        shape = RoundedCornerShape(24.dp),
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                "先算路，再叫你出门",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "输入到达时间，系统按你选的出行方式倒推最迟出门时间；你再加一段 buffer，就能更从容。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FormulaChip("到达")
-                Text("−", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
-                FormulaChip("耗时")
-                Text("−", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
-                FormulaChip("缓冲")
-                Text("=", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
-                FormulaChip("提醒")
-            }
-        }
-    }
-}
-
-@Composable
-private fun FormulaChip(text: String) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.66f),
-        shape = CircleShape,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-        )
     }
 }
 
@@ -295,11 +228,7 @@ private fun KeyCard(
     onKeyChange: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    SectionCard(
-        title = "高德路线",
-        subtitle = "五种出行方式共用一个「Web 服务」Key",
-        icon = { Icon(Icons.Outlined.Key, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-    ) {
+    SectionCard("高德路线") {
         OutlinedTextField(
             value = key,
             onValueChange = onKeyChange,
@@ -317,22 +246,15 @@ private fun KeyCard(
                 }
             },
         )
-        Spacer(Modifier.height(6.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "个人开发者有免费额度，普通通勤足够用。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(onClick = {
+        TextButton(
+            onClick = {
                 runCatching {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://console.amap.com/dev/key/app")),
                     )
                 }
-            }) { Text("去申请") }
-        }
+            },
+        ) { Text("去高德申请 Key") }
     }
 }
 
@@ -346,11 +268,7 @@ private fun RouteCard(
     onSelectOrigin: (CommutePlace) -> Unit,
     onSelectDestination: (CommutePlace) -> Unit,
 ) {
-    SectionCard(
-        title = "路线",
-        subtitle = "输入地点后点搜索，选择高德返回的 POI",
-        icon = { Icon(Icons.Outlined.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-    ) {
+    SectionCard("路线") {
         PlaceField(
             label = "出发地",
             badge = "起",
@@ -384,11 +302,7 @@ private fun ModeCard(
     selected: CommuteMode,
     onSelect: (CommuteMode) -> Unit,
 ) {
-    SectionCard(
-        title = "怎么去",
-        subtitle = "不同方式，耗时差别很大",
-        icon = { Icon(Icons.Outlined.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-    ) {
+    SectionCard("怎么去") {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -433,12 +347,6 @@ private fun ModeCard(
                 }
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Text(
-            text = modeNote(selected),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -448,14 +356,6 @@ private fun modeIcon(mode: CommuteMode): ImageVector = when (mode) {
     CommuteMode.EBIKE -> Icons.Outlined.ElectricBike
     CommuteMode.DRIVING -> Icons.Outlined.DirectionsCar
     CommuteMode.TRANSIT -> Icons.Outlined.DirectionsBus
-}
-
-private fun modeNote(mode: CommuteMode): String = when (mode) {
-    CommuteMode.WALKING -> "按步行路线计算，适合 2 公里内；太远会明显偏长。"
-    CommuteMode.BICYCLING -> "按高德骑行路线计算，已避开机动车道。"
-    CommuteMode.EBIKE -> "按骑行路线 × 0.72 估算；实际受红绿灯、载人和限速影响。"
-    CommuteMode.DRIVING -> "含当前路况与红绿灯，早晚高峰会明显变长。"
-    CommuteMode.TRANSIT -> "含换乘、步行接驳和候车时间，按最快方案估算。"
 }
 
 @Composable
@@ -545,17 +445,7 @@ private fun ScheduleCard(
     onWorkdaysOnly: (Boolean) -> Unit,
     onRefresh: () -> Unit,
 ) {
-    SectionCard(
-        title = "时间",
-        subtitle = "按${plan.mode.label}倒推",
-        icon = {
-            Icon(
-                modeIcon(plan.mode),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        },
-    ) {
+    SectionCard("时间") {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -577,14 +467,7 @@ private fun ScheduleCard(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
         Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("额外提前缓冲", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "在「最迟出门」基础上再提前 ${plan.bufferMinutes} 分钟",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text("额外提前缓冲", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
                 Text(
                     "+${plan.bufferMinutes} 分",
@@ -601,8 +484,8 @@ private fun ScheduleCard(
             steps = 11,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-        SettingRow("启用通勤提醒", "到提醒时间发横幅通知", plan.enabled, onEnabled)
-        SettingRow("仅法定工作日", "自动跳过周末、节假日和调休", plan.workdaysOnly, onWorkdaysOnly)
+        SettingRow("启用通勤提醒", plan.enabled, onEnabled)
+        SettingRow("仅法定工作日", plan.workdaysOnly, onWorkdaysOnly)
         Spacer(Modifier.height(4.dp))
         Button(
             onClick = onRefresh,
@@ -624,21 +507,12 @@ private fun ScheduleCard(
                 Text("重新计算${plan.mode.label}耗时")
             }
         }
-        if (preview == null && plan.isConfigured) {
-            Text(
-                "选择出行方式后点上方按钮，或保存时自动计算。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        }
     }
 }
 
 @Composable
 private fun SettingRow(
     title: String,
-    subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -648,10 +522,7 @@ private fun SettingRow(
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text(title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
@@ -660,18 +531,17 @@ private fun SettingRow(
 private fun PreviewCard(
     plan: CommutePlan,
     preview: com.mobilealarm.domain.model.CommutePreview?,
-    refreshing: Boolean,
 ) {
     if (preview == null) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
+            shape = RoundedCornerShape(18.dp),
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Text("还不能倒推", style = MaterialTheme.typography.titleMedium)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("还不能倒推", style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "填写出发地、目的地和 Key，选择出行方式后点「重新计算耗时」，即可得到最迟出门时间。",
+                    "填好路线和 Key，点「重新计算耗时」即可。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -682,15 +552,11 @@ private fun PreviewCard(
     val scheme = MaterialTheme.colorScheme
     Card(
         colors = CardDefaults.cardColors(containerColor = scheme.primaryContainer),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(20.dp),
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "建议出门",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = scheme.primary,
-                )
+                Text("建议出门", style = MaterialTheme.typography.labelLarge, color = scheme.primary)
                 Spacer(Modifier.weight(1f))
                 Text(
                     "${preview.arrivalText} 到达",
@@ -698,67 +564,34 @@ private fun PreviewCard(
                     color = scheme.onPrimaryContainer.copy(alpha = 0.7f),
                 )
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
                 preview.latestDepartureText,
-                fontSize = 54.sp,
+                fontSize = 46.sp,
                 fontWeight = FontWeight.Light,
                 color = scheme.onPrimaryContainer,
             )
             Text(
-                "最迟出门 · ${plan.mode.label}约 ${preview.routeMinutes} 分钟",
+                "最迟出门 · ${plan.mode.label}约 ${preview.routeMinutes} 分",
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onPrimaryContainer.copy(alpha = 0.72f),
             )
-            Spacer(Modifier.height(14.dp))
-            Surface(color = scheme.surface.copy(alpha = 0.7f), shape = RoundedCornerShape(14.dp)) {
-                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                    Row {
-                        Text("提醒时间", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                        Spacer(Modifier.weight(1f))
-                        Text(
-                            preview.remindText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = scheme.onSurface,
-                        )
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Row {
-                        Text("含缓冲", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                        Spacer(Modifier.weight(1f))
-                        Text("${plan.bufferMinutes} 分钟", style = MaterialTheme.typography.bodySmall, color = scheme.onSurface)
-                    }
-                    if (plan.routeDistanceMeters != null) {
-                        Spacer(Modifier.height(4.dp))
-                        Row {
-                            Text("路程", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                            Spacer(Modifier.weight(1f))
-                            Text(
-                                "%.1f 公里".format(plan.routeDistanceMeters / 1000.0),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = scheme.onSurface,
-                            )
-                        }
-                    }
-                }
-            }
-            plan.routeSummary?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "提醒 ${preview.remindText} · 含缓冲 ${plan.bufferMinutes} 分",
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onPrimaryContainer.copy(alpha = 0.78f),
+            )
+            val meta = buildList {
+                plan.routeSummary?.takeIf { it.isNotBlank() }?.let(::add)
+                plan.routeDistanceMeters?.let { add("%.1f 公里".format(it / 1000.0)) }
+            }.joinToString(" · ")
+            if (meta.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
                 Text(
-                    it,
+                    meta,
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onPrimaryContainer.copy(alpha = 0.62f),
-                )
-            }
-            plan.routeUpdatedAt.takeIf { it > 0 }?.let {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "${plan.mode.label}耗时更新于 " + Instant.ofEpochMilli(it)
-                        .atZone(ZoneId.systemDefault())
-                        .format(DateTimeFormatter.ofPattern("HH:mm")),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = scheme.onPrimaryContainer.copy(alpha = 0.6f),
                 )
             }
         }
@@ -768,30 +601,26 @@ private fun PreviewCard(
 @Composable
 private fun SectionCard(
     title: String,
-    subtitle: String,
-    icon: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
         ),
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                    Box(modifier = Modifier.size(34.dp), contentAlignment = Alignment.Center) { icon() }
-                }
-                Spacer(Modifier.width(10.dp))
-                Column {
-                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Spacer(Modifier.height(14.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(Modifier.height(12.dp))
             content()
         }
     }

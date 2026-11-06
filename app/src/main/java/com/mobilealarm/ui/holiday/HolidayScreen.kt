@@ -22,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronLeft
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
@@ -111,9 +109,9 @@ fun HolidayScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp,
+                start = 16.dp, end = 16.dp, top = 6.dp, bottom = 24.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
                 YearMonthHeader(
@@ -227,10 +225,10 @@ private fun MonthCalendar(
         while (size % 7 != 0) add(null)
     }
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 listOf("一", "二", "三", "四", "五", "六", "日").forEach { label ->
                     Text(
@@ -327,32 +325,21 @@ private fun MonthSummary(yearMonth: YearMonth, calendar: WorkdayCalendar?) {
     for (day in 1..yearMonth.lengthOfMonth()) {
         if (calendar.isWorkday(yearMonth.atDay(day))) work++ else rest++
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        StatChip("本月上班", "$work 天")
-        StatChip("本月休息", "$rest 天")
-    }
-}
-
-@Composable
-private fun StatChip(label: String, value: String) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(14.dp),
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleMedium)
-        }
-    }
+    Text(
+        "本月上班 $work 天 · 休息 $rest 天",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 2.dp),
+    )
 }
 
 @Composable
 private fun InfoBanner(title: String, text: String) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
     ) {
-        Row(modifier = Modifier.padding(14.dp)) {
+        Row(modifier = Modifier.padding(12.dp)) {
             Icon(
                 Icons.Outlined.Info,
                 contentDescription = null,
@@ -370,57 +357,44 @@ private fun InfoBanner(title: String, text: String) {
 @Composable
 private fun DataSourceCard(state: HolidayUiState, onRefresh: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Outlined.EventAvailable,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("数据来源", style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(Modifier.height(8.dp))
-            if (state.sources.isEmpty()) {
-                Text("暂无覆盖数据", style = MaterialTheme.typography.bodySmall)
-            } else {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("数据来源", style = MaterialTheme.typography.titleSmall)
                 Text(
-                    state.sources.entries.joinToString("、") { (year, source) -> "$year 年（$source）" },
+                    if (state.sources.isEmpty()) {
+                        "暂无覆盖数据"
+                    } else {
+                        state.sources.entries.joinToString("、") { (year, source) -> "$year · $source" }
+                    },
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                )
+                Text(
+                    if (state.lastUpdate > 0) {
+                        "更新于 " + Instant.ofEpochMilli(state.lastUpdate)
+                            .atZone(ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ofPattern("M月d日 HH:mm"))
+                    } else {
+                        "当前使用内置日历"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = if (state.lastUpdate > 0) {
-                    "上次在线更新：" + Instant.ofEpochMilli(state.lastUpdate)
-                        .atZone(ZoneId.systemDefault())
-                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-                } else {
-                    "尚未在线更新，当前使用应用内置日历。"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
             TextButton(onClick = onRefresh, enabled = !state.refreshing) {
                 if (state.refreshing) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(6.dp))
                 } else {
-                    Icon(Icons.Outlined.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
+                    Text("更新")
                 }
-                Text(if (state.refreshing) "正在更新…" else "从在线数据源更新")
             }
-            Text(
-                "在线数据来自 holiday-cn（跟随国务院每年发布的放假安排）。点击任意日期可以手动把某天设为上班或休息。",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -428,13 +402,13 @@ private fun DataSourceCard(state: HolidayUiState, onRefresh: () -> Unit) {
 @Composable
 private fun LegendCard() {
     Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             LegendItem("班", "工作日/补班", MaterialTheme.colorScheme.tertiaryContainer)

@@ -193,17 +193,6 @@ fun AlarmEditScreen(
                     isNew = alarmId == 0L,
                     onBack = onBack,
                     onDelete = { showDeleteConfirm = true },
-                    onSave = viewModel::save,
-                )
-            }
-            item {
-                DateStrip(
-                    selected = state.oneTimeDate.takeIf { state.dayMode == DayMode.ONCE },
-                    onSelect = { date ->
-                        if (state.dayMode != DayMode.ONCE) viewModel.setDayMode(DayMode.ONCE)
-                        viewModel.setOneTimeDate(date)
-                    },
-                    isOnce = state.dayMode == DayMode.ONCE,
                 )
             }
             item {
@@ -367,7 +356,6 @@ private fun EditHeader(
     isNew: Boolean,
     onBack: () -> Unit,
     onDelete: () -> Unit,
-    onSave: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -390,71 +378,6 @@ private fun EditHeader(
                 Icon(Icons.Outlined.Delete, "删除闹钟", tint = Ink3, modifier = Modifier.size(19.dp))
             }
         }
-        TextButton(
-            onClick = onSave,
-            modifier = Modifier
-                .padding(start = 4.dp)
-                .height(32.dp),
-            shape = RoundedCornerShape(10.dp),
-            border = BorderStroke(1.dp, Vermilion.copy(alpha = 0.55f)),
-            contentPadding = PaddingValues(horizontal = 12.dp),
-        ) {
-            Text("保存", color = Vermilion, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-        }
-    }
-}
-
-@Composable
-private fun DateStrip(
-    selected: LocalDate?,
-    onSelect: (LocalDate) -> Unit,
-    isOnce: Boolean,
-) {
-    val today = LocalDate.now()
-    val days = (0..4).map { today.plusDays(it.toLong()) }
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            days.forEach { date ->
-                val isSelected = selected == date
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) Ink else Color.Transparent)
-                        .clickable { onSelect(date) }
-                        .padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stripLabel(date, today),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) Paper.copy(alpha = 0.8f) else Ink3,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "${date.monthValue}/${date.dayOfMonth}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) Paper else Ink,
-                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-                    )
-                }
-            }
-        }
-        Text(
-            text = if (isOnce) {
-                "只在选中的这一天响铃，响后自动关闭。"
-            } else {
-                "点选日期会切换为“只响一次”；长期重复在下方选择。"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = Ink4,
-            modifier = Modifier.padding(top = 8.dp),
-        )
     }
 }
 
@@ -464,7 +387,7 @@ private fun TimeHero(hour: Int, minute: Int, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp, bottom = 18.dp)
+            .padding(top = 16.dp, bottom = 14.dp)
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 4.dp),
@@ -472,31 +395,27 @@ private fun TimeHero(hour: Int, minute: Int, onClick: () -> Unit) {
     ) {
         Text(
             text = "%02d".format(hour12),
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp, lineHeight = 76.sp),
+            style = MaterialTheme.typography.displayLarge.copy(fontSize = 64.sp, lineHeight = 68.sp),
             color = Ink,
         )
         Text(
             text = ":",
-            style = MaterialTheme.typography.displayMedium.copy(fontSize = 54.sp),
+            style = MaterialTheme.typography.displayMedium.copy(fontSize = 46.sp),
             color = Ink3,
             modifier = Modifier.padding(horizontal = 4.dp),
         )
         Text(
             text = "%02d".format(minute),
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp, lineHeight = 76.sp),
+            style = MaterialTheme.typography.displayLarge.copy(fontSize = 64.sp, lineHeight = 68.sp),
             color = Ink,
         )
         Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.padding(top = 8.dp)) {
-            Text(
-                text = if (hour < 12) "上午" else "下午",
-                style = MaterialTheme.typography.titleMedium,
-                color = Ink2,
-            )
-            Text("点按调整", style = MaterialTheme.typography.labelSmall, color = Ink4)
-        }
-        Spacer(Modifier.weight(1f))
-        Icon(Icons.Outlined.ChevronRight, "调整时间", tint = Ink4, modifier = Modifier.size(20.dp))
+        Text(
+            text = if (hour < 12) "上午" else "下午",
+            style = MaterialTheme.typography.titleMedium,
+            color = Ink2,
+            modifier = Modifier.padding(top = 8.dp),
+        )
     }
     HorizontalDivider(color = Hairline, thickness = 1.dp)
 }
@@ -510,7 +429,7 @@ private fun RepeatSection(
     onHolidays: (Boolean) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 18.dp)) {
-        SectionHeader("重复", if (state.dayMode == DayMode.ONCE) null else "按中国法定节假日与调休判断")
+        SectionHeader("重复")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -540,13 +459,6 @@ private fun RepeatSection(
                 }
             }
         }
-        Text(
-            text = state.dayMode.description,
-            style = MaterialTheme.typography.bodySmall,
-            color = Ink3,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-
         when (state.dayMode) {
             DayMode.ONCE -> {
                 Row(
@@ -626,23 +538,7 @@ private fun WeatherRulesSection(
     onEdit: (WeatherRule) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 22.dp)) {
-        SectionHeader("天气条件", "命中后叠加，总调整最多 ±180 分钟")
-        if (rules.isEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Outlined.WbSunny, null, tint = Moss, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    "暂无条件，闹钟按固定时间响铃。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Ink3,
-                )
-            }
-        }
+        SectionHeader("天气条件")
         rules.forEachIndexed { index, rule ->
             if (index > 0) Spacer(Modifier.height(8.dp))
             RuleCard(
@@ -731,23 +627,13 @@ private fun RuleCard(
                 )
             }
         }
-        HorizontalDivider(color = Hairline, thickness = 1.dp, modifier = Modifier.padding(vertical = 9.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = if (rule.enabled) "已启用" else "已停用",
-                style = MaterialTheme.typography.labelSmall,
-                color = if (rule.enabled) Moss else Ink4,
-            )
-            Spacer(Modifier.weight(1f))
-            Text("修改  ›", style = MaterialTheme.typography.labelMedium, color = Ink2)
-        }
     }
 }
 
 @Composable
 private fun CommuteEntry(onOpenCommute: () -> Unit) {
     Column(modifier = Modifier.padding(top = 22.dp)) {
-        SectionHeader("出门", "由到达时间与所选出行方式倒推")
+        SectionHeader("出门")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -756,14 +642,12 @@ private fun CommuteEntry(onOpenCommute: () -> Unit) {
                 .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("通勤出门提醒", style = MaterialTheme.typography.titleMedium, color = Ink)
-                Text(
-                    "按步行/骑行/开车等方式计算耗时，并在闹钟后独立提醒。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Ink3,
-                )
-            }
+            Text(
+                "通勤出门提醒",
+                style = MaterialTheme.typography.titleMedium,
+                color = Ink,
+                modifier = Modifier.weight(1f),
+            )
             Icon(Icons.Outlined.ChevronRight, "打开通勤设置", tint = Ink4, modifier = Modifier.size(20.dp))
         }
         HorizontalDivider(color = Hairline, thickness = 1.dp)
@@ -781,7 +665,7 @@ private fun RingSection(
 ) {
     val context = LocalContext.current
     Column(modifier = Modifier.padding(top = 22.dp)) {
-        SectionHeader("响铃", "音量与勿扰策略由系统控制")
+        SectionHeader("响铃")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -831,10 +715,12 @@ private fun RingSection(
                 .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("响铃时震动", style = MaterialTheme.typography.bodyMedium, color = Ink)
-                Text("与铃声同时开始，关闭后只响铃", style = MaterialTheme.typography.bodySmall, color = Ink4)
-            }
+            Text(
+                "响铃时震动",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink,
+                modifier = Modifier.weight(1f),
+            )
             Switch(checked = vibrate, onCheckedChange = onVibrate, colors = editSwitchColors())
         }
     }
@@ -866,11 +752,6 @@ private fun EditBottomBar(plan: AlarmPlan?, loading: Boolean, onSave: () -> Unit
                             color = if (plan.offsetMinutes == 0) Ink3 else Vermilion,
                         )
                     }
-                    Text(
-                        text = "基准 ${plan.baseTimeText} · ${plan.dayInfo.kindLabel}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Ink4,
-                    )
                 } else {
                     Text(
                         text = "这个时间已经过去，或未来没有符合条件的日期。",
@@ -1159,14 +1040,12 @@ private fun HolidaySwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
             .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text("跟随法定节假日与调休", style = MaterialTheme.typography.bodyMedium, color = Ink)
-            Text(
-                "补班日会响，法定假日跳过；数据自动同步。",
-                style = MaterialTheme.typography.bodySmall,
-                color = Ink3,
-            )
-        }
+        Text(
+            "跟随法定节假日与调休",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Ink,
+            modifier = Modifier.weight(1f),
+        )
         Switch(checked = checked, onCheckedChange = onChange, colors = editSwitchColors())
     }
 }
@@ -1189,17 +1068,13 @@ private fun ChoicePill(text: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionHeader(title: String, subtitle: String? = null) {
-    Column(modifier = Modifier.padding(bottom = 6.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 2.sp),
-            color = Ink3,
-        )
-        if (subtitle != null) {
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Ink4)
-        }
-    }
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 2.sp),
+        color = Ink3,
+        modifier = Modifier.padding(bottom = 6.dp),
+    )
 }
 
 @Composable
@@ -1247,12 +1122,6 @@ private fun ruleCardTitle(rule: WeatherRule, plan: AlarmPlan?): String {
         WeatherMetric.UV_INDEX -> "紫外线 ${rule.comparator.label} ${formatNumber(rule.threshold)}"
     }
     return whenText + condition
-}
-
-private fun stripLabel(date: LocalDate, today: LocalDate): String = when (date) {
-    today -> "今天"
-    today.plusDays(1) -> "明天"
-    else -> date.format(DateTimeFormatter.ofPattern("EEE", Locale.CHINA))
 }
 
 private fun dayWord(date: LocalDate): String = when (date) {

@@ -34,7 +34,6 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Thermostat
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -125,9 +124,9 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 20.dp, end = 20.dp, top = 12.dp, bottom = 32.dp,
+                start = 18.dp, end = 18.dp, top = 8.dp, bottom = 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 WeatherLocationCard(
@@ -204,7 +203,7 @@ private fun WeatherLocationCard(
     onAutoLocation: (Boolean) -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -319,7 +318,7 @@ private fun CommuteEntryCard(onOpenCommute: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onOpenCommute),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
@@ -332,14 +331,7 @@ private fun CommuteEntryCard(onOpenCommute: () -> Unit) {
                 tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("通勤提醒", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "按步行/骑行/开车等出行方式倒推最迟出门时间",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text("通勤提醒", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
         }
     }
@@ -348,31 +340,33 @@ private fun CommuteEntryCard(onOpenCommute: () -> Unit) {
 @Composable
 private fun HolidayDataCard(settings: AppSettings, onOpenHoliday: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpenHoliday),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Cloud, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(8.dp))
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Cloud, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text("节假日与调休", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = if (settings.lastHolidayUpdate > 0) {
+                        "已更新 · " + Instant.ofEpochMilli(settings.lastHolidayUpdate)
+                            .atZone(ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ofPattern("M月d日 HH:mm"))
+                    } else {
+                        "内置 2024–2026 日历"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = if (settings.lastHolidayUpdate > 0) {
-                    "在线数据已更新：" + Instant.ofEpochMilli(settings.lastHolidayUpdate)
-                        .atZone(ZoneId.systemDefault())
-                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-                } else {
-                    "当前使用内置的 2024–2026 年日历，可联网更新。"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(6.dp))
-            Button(onClick = onOpenHoliday, shape = RoundedCornerShape(14.dp)) {
-                Text("管理节假日日历")
-            }
+            Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -386,7 +380,7 @@ private fun PermissionsCard(
     onFullScreen: () -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -499,7 +493,7 @@ private fun SettingRow(
 @Composable
 private fun AboutCard() {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -508,17 +502,9 @@ private fun AboutCard() {
                 Spacer(Modifier.width(8.dp))
                 Text("关于天气联动", style = MaterialTheme.typography.titleMedium)
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "天气预报来自 Open-Meteo（免 API Key）。每个条件可以单独设置提前或延后分钟数；" +
-                    "多个条件同时满足时叠加计算，总调整限制在 ±180 分钟内。" +
-                    "没有对应日期的预报时，闹钟按基准时间响铃。",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Spacer(Modifier.height(6.dp))
             Text(
-                "节假日数据来自 holiday-cn，跟随国务院安排更新；也可以按日期手动覆盖。",
+                "天气来自 Open-Meteo；节假日来自 holiday-cn。多个条件叠加，总调整不超过 ±180 分钟。",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
