@@ -38,9 +38,9 @@ jobs:
           TITLE="天时闹钟 ${TAG#v}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             if [ -f "$NOTES" ]; then
-              gh release edit "$TAG" --title "$TITLE" --notes-file "$NOTES"
+              gh release edit "$TAG" --title "$TITLE" --notes-file "$NOTES" --draft=false
             else
-              gh release edit "$TAG" --title "$TITLE"
+              gh release edit "$TAG" --title "$TITLE" --draft=false
             fi
             gh release upload "$TAG" "$ASSET" --clobber
           elif [ -f "$NOTES" ]; then
