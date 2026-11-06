@@ -7,6 +7,8 @@
 - 语言：简体中文
 - 天气与节假日数据均来自免费、无需 API Key 的公开接口
 
+> 下载安装包：[天时闹钟 1.4.0 · GitHub Releases](https://github.com/2281884343/Chronos-Alarm/releases/tag/v1.4.0)
+
 ## 功能
 
 ### 1. 法定节假日与调休
