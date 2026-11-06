@@ -34,15 +34,23 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          NOTES=".github/release-notes/${TAG#v}.md"
-          if [ -f "$NOTES" ]; then
+          NOTES=".github/release-notes/${TAG}.md"
+          TITLE="天时闹钟 ${TAG#v}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ -f "$NOTES" ]; then
+              gh release edit "$TAG" --title "$TITLE" --notes-file "$NOTES"
+            else
+              gh release edit "$TAG" --title "$TITLE"
+            fi
+            gh release upload "$TAG" "$ASSET" --clobber
+          elif [ -f "$NOTES" ]; then
             gh release create "$TAG" "$ASSET" \
-              --title "天时闹钟 ${TAG#v}" \
+              --title "$TITLE" \
               --notes-file "$NOTES" \
               --verify-tag
           else
             gh release create "$TAG" "$ASSET" \
-              --title "天时闹钟 ${TAG#v}" \
+              --title "$TITLE" \
               --generate-notes \
               --verify-tag
           fi
