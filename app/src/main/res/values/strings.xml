@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">天时闹钟</string>
+    <string name="channel_alarm_name">闹钟</string>
+    <string name="channel_alarm_desc">到点响铃的全屏闹钟通知</string>
+    <string name="action_dismiss">关闭闹钟</string>
+    <string name="action_snooze">稍后提醒</string>
+    <string name="alarm_notification_title">闹钟响了</string>
+    <string name="alarm_notification_loading">正在准备闹钟…</string>
+    <string name="alarm_notification_text">%1$s · 点击查看并关闭闹钟</string>
+</resources>
